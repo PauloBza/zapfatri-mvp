@@ -30,6 +30,8 @@ app.use(express.json());
 app.use(cookieParser());
 
 function layout(title, body) {
+  const logoUrl = process.env.BRAND_LOGO_URL || "https://agenda-lives-pbza.onrender.com/fatri-logo.png";
+
   return `<!doctype html>
 <html lang="pt-BR">
 <head>
@@ -37,53 +39,434 @@ function layout(title, body) {
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>${escapeHtml(title)} | ZapFatri</title>
   <style>
-    :root { font-family: Arial, sans-serif; color: #111827; background: #f4f6f8; }
-    body { margin: 0; }
-    header { background: #111827; color: white; padding: 16px 24px; display:flex; gap:18px; align-items:center; flex-wrap:wrap; }
-    header a { color: white; text-decoration: none; opacity: .9; }
-    main { width: min(1420px, calc(100% - 32px)); margin: 24px auto; padding: 0; }
-    .card { background: white; border-radius: 12px; padding: 18px; box-shadow: 0 1px 4px rgba(0,0,0,.08); margin-bottom: 16px; overflow:hidden; }
-    .grid { display:grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 12px; }
-    .metric { font-size: 28px; font-weight: 700; }
-    label { display:block; font-weight: 700; margin: 12px 0 6px; }
-    input, select, textarea { width: 100%; box-sizing: border-box; padding: 10px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 14px; }
-    button, .btn { background: #111827; color: white; border: 0; border-radius: 8px; padding: 10px 14px; text-decoration:none; display:inline-block; cursor:pointer; }
-    .btn.secondary, button.secondary { background: #374151; }
-    .btn.light { background: #e5e7eb; color:#111827; }
-    .table-scroll { overflow-x:auto; width:100%; padding-bottom: 6px; }
-    table { width: max-content; min-width: 100%; border-collapse: collapse; font-size: 13px; }
-    th, td { padding: 9px; border-bottom: 1px solid #e5e7eb; text-align: left; vertical-align: top; white-space: nowrap; }
-    th { background: #f9fafb; position: sticky; top: 0; z-index: 1; }
+    :root {
+      --azul-900: #0b234f;
+      --azul-800: #12366f;
+      --azul-700: #173f86;
+      --azul-600: #214da1;
+      --dourado-700: #b88912;
+      --dourado-600: #d0a428;
+      --dourado-400: #efd26d;
+      --creme: #f5f1e8;
+      --creme-2: #fbf8f1;
+      --branco: #ffffff;
+      --texto: #17223b;
+      --texto-suave: #647089;
+      --linha: rgba(23, 34, 59, .10);
+      --sombra: 0 18px 45px rgba(11, 35, 79, .12);
+      --sombra-suave: 0 8px 24px rgba(11, 35, 79, .08);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+      color: var(--texto);
+      background: radial-gradient(circle at top left, rgba(212,166,42,.18), transparent 32rem), linear-gradient(180deg, var(--creme-2), #eef2f7 46%, #f7f7f3);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--texto);
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      background:
+        radial-gradient(circle at 92% 4%, rgba(212, 166, 42, .22), transparent 22rem),
+        radial-gradient(circle at 8% 12%, rgba(23, 63, 134, .13), transparent 24rem);
+      z-index: -1;
+    }
+
+    header {
+      width: min(1480px, calc(100% - 32px));
+      margin: 18px auto 0;
+      padding: 18px 22px;
+      border: 1px solid rgba(255, 255, 255, .82);
+      border-radius: 28px;
+      background: rgba(255, 255, 255, .90);
+      box-shadow: var(--sombra);
+      backdrop-filter: blur(10px);
+      display: grid;
+      grid-template-columns: minmax(250px, 1fr) auto;
+      align-items: center;
+      gap: 18px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      min-width: 0;
+      gap: 18px;
+    }
+
+    .brand-logo {
+      width: clamp(156px, 18vw, 245px);
+      max-height: 72px;
+      object-fit: contain;
+      background: white;
+      padding: 9px 16px;
+      border-radius: 20px;
+      box-shadow: inset 0 0 0 1px rgba(23, 34, 59, .08);
+    }
+
+    .brand-copy { min-width: 0; }
+
+    .brand-title {
+      font-size: clamp(26px, 3vw, 42px);
+      line-height: 1;
+      letter-spacing: -.04em;
+      font-weight: 900;
+      color: var(--azul-900);
+      white-space: nowrap;
+    }
+
+    .brand-subtitle {
+      margin-top: 7px;
+      color: var(--texto-suave);
+      font-weight: 800;
+      letter-spacing: .14em;
+      text-transform: uppercase;
+      font-size: 12px;
+    }
+
+    nav {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    header a {
+      color: var(--azul-900);
+      text-decoration: none;
+      font-weight: 800;
+      font-size: 14px;
+      padding: 11px 15px;
+      border-radius: 999px;
+      background: rgba(23, 63, 134, .08);
+      border: 1px solid rgba(23, 63, 134, .08);
+      transition: transform .15s ease, box-shadow .15s ease, background .15s ease;
+      white-space: nowrap;
+    }
+
+    header a:hover {
+      transform: translateY(-1px);
+      background: rgba(23, 63, 134, .14);
+      box-shadow: var(--sombra-suave);
+    }
+
+    header a:first-of-type {
+      color: #fff;
+      background: linear-gradient(135deg, var(--azul-700), var(--azul-900));
+      box-shadow: 0 12px 26px rgba(23, 63, 134, .22);
+    }
+
+    header a[href="/logout"] {
+      color: #fff;
+      background: linear-gradient(135deg, var(--dourado-600), var(--dourado-700));
+      box-shadow: 0 12px 26px rgba(184, 137, 18, .20);
+    }
+
+    main {
+      width: min(1480px, calc(100% - 32px));
+      margin: 26px auto 46px;
+      padding: 0;
+    }
+
+    h1, h2, h3 {
+      color: var(--azul-900);
+      letter-spacing: -.035em;
+      line-height: 1.05;
+    }
+
+    h1 { font-size: clamp(30px, 3vw, 44px); margin: 8px 0 18px; }
+    h2 { font-size: clamp(22px, 2vw, 30px); margin: 8px 0 18px; }
+
+    .card {
+      background: rgba(255, 255, 255, .94);
+      border: 1px solid rgba(255,255,255,.86);
+      border-radius: 22px;
+      padding: 22px;
+      box-shadow: var(--sombra-suave);
+      margin-bottom: 18px;
+      overflow: hidden;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(235px, 1fr));
+      gap: 14px;
+      margin-bottom: 18px;
+    }
+
+    .grid > .card {
+      min-height: 128px;
+      color: white;
+      background:
+        linear-gradient(135deg, rgba(255,255,255,.16), transparent 42%),
+        linear-gradient(135deg, var(--azul-700), var(--azul-900));
+      border: 1px solid rgba(255, 255, 255, .22);
+      box-shadow: 0 18px 42px rgba(11, 35, 79, .18);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+
+    .grid > .card:nth-child(2) {
+      background:
+        linear-gradient(135deg, rgba(255,255,255,.16), transparent 42%),
+        linear-gradient(135deg, #294d87, #102d62);
+    }
+
+    .grid > .card:nth-child(3) {
+      background:
+        linear-gradient(135deg, rgba(255,255,255,.16), transparent 42%),
+        linear-gradient(135deg, #315c9d, #173f86);
+    }
+
+    .grid > .card:nth-child(4) {
+      background:
+        linear-gradient(135deg, rgba(255,255,255,.16), transparent 42%),
+        linear-gradient(135deg, #b88912, #d0a428);
+      color: #fff;
+    }
+
+    .grid > .card .muted {
+      color: rgba(255,255,255,.84);
+      font-weight: 800;
+      letter-spacing: .02em;
+    }
+
+    .metric {
+      margin-top: 6px;
+      font-size: clamp(30px, 3.2vw, 44px);
+      line-height: 1;
+      font-weight: 950;
+      letter-spacing: -.04em;
+      word-break: break-word;
+    }
+
+    label {
+      display: block;
+      font-weight: 850;
+      margin: 14px 0 7px;
+      color: var(--azul-900);
+    }
+
+    input, select, textarea {
+      width: 100%;
+      box-sizing: border-box;
+      padding: 12px 13px;
+      border: 1px solid rgba(23, 34, 59, .16);
+      border-radius: 14px;
+      font-size: 14px;
+      background: rgba(255,255,255,.92);
+      color: var(--texto);
+      outline: none;
+      transition: border .15s ease, box-shadow .15s ease;
+    }
+
+    input:focus, select:focus, textarea:focus {
+      border-color: rgba(23, 63, 134, .55);
+      box-shadow: 0 0 0 4px rgba(23, 63, 134, .10);
+    }
+
+    button, .btn {
+      background: linear-gradient(135deg, var(--azul-700), var(--azul-900));
+      color: white;
+      border: 0;
+      border-radius: 14px;
+      padding: 11px 16px;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      cursor: pointer;
+      font-weight: 850;
+      box-shadow: 0 12px 22px rgba(23, 63, 134, .16);
+      transition: transform .15s ease, box-shadow .15s ease, filter .15s ease;
+      white-space: nowrap;
+    }
+
+    button:hover, .btn:hover {
+      transform: translateY(-1px);
+      filter: brightness(1.03);
+      box-shadow: 0 14px 28px rgba(23, 63, 134, .22);
+    }
+
+    .btn.secondary, button.secondary {
+      background: linear-gradient(135deg, #385a91, #173f86);
+    }
+
+    .btn.light {
+      background: #edf1f7;
+      color: var(--azul-900);
+      box-shadow: none;
+      border: 1px solid rgba(23, 34, 59, .08);
+    }
+
+    .table-scroll {
+      overflow-x: auto;
+      width: 100%;
+      padding-bottom: 6px;
+      border-radius: 16px;
+    }
+
+    table {
+      width: max-content;
+      min-width: 100%;
+      border-collapse: separate;
+      border-spacing: 0;
+      font-size: 13px;
+    }
+
+    th, td {
+      padding: 11px 10px;
+      border-bottom: 1px solid var(--linha);
+      text-align: left;
+      vertical-align: top;
+      white-space: nowrap;
+    }
+
+    th {
+      background: linear-gradient(180deg, #f8fafc, #eef2f8);
+      color: var(--azul-900);
+      font-weight: 900;
+      position: sticky;
+      top: 0;
+      z-index: 1;
+    }
+
+    tbody tr:hover td {
+      background: rgba(23, 63, 134, .035);
+    }
+
     td { max-width: none; }
-    code { background: #f3f4f6; padding: 2px 5px; border-radius: 4px; white-space: nowrap; }
-    .cell { display:block; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width: 140px; cursor: copy; }
+
+    code {
+      background: rgba(23, 63, 134, .08);
+      color: #102d62;
+      padding: 3px 7px;
+      border-radius: 7px;
+      white-space: nowrap;
+      border: 1px solid rgba(23, 63, 134, .06);
+    }
+
+    a { color: var(--azul-700); font-weight: 800; }
+
+    .cell {
+      display: block;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      max-width: 140px;
+      cursor: copy;
+    }
+
     .cell.xs { max-width: 72px; }
     .cell.sm { max-width: 105px; }
     .cell.md { max-width: 160px; }
     .cell.lg { max-width: 240px; }
     .cell.xl { max-width: 360px; }
-    .cell.empty { color:#9ca3af; cursor: default; }
-    .cell:hover { background:#f3f4f6; border-radius:4px; }
-    .copy-toast { position: fixed; right: 18px; bottom: 18px; background:#111827; color:white; padding:10px 12px; border-radius:8px; opacity:0; transform:translateY(10px); transition:.18s; pointer-events:none; z-index:9999; }
-    .copy-toast.show { opacity:1; transform:translateY(0); }
-    .legend { font-size:12px; color:#6b7280; margin-top:8px; }
-    .muted { color: #6b7280; font-size: 13px; }
-    .row-actions { display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
-    .danger { color: #b91c1c; }
-    .pill { display:inline-block; background:#eef2ff; color:#3730a3; border-radius:999px; padding:2px 8px; font-size:12px; }
-    .nowrap { white-space:nowrap; }
-    @media (max-width: 800px) { main { width: calc(100% - 20px); } header { gap:10px; } }
+    .cell.empty { color: #9ca3af; cursor: default; }
+
+    .cell:hover {
+      background: rgba(23, 63, 134, .08);
+      border-radius: 6px;
+    }
+
+    .copy-toast {
+      position: fixed;
+      right: 18px;
+      bottom: 18px;
+      background: linear-gradient(135deg, var(--azul-700), var(--azul-900));
+      color: white;
+      padding: 12px 15px;
+      border-radius: 14px;
+      opacity: 0;
+      transform: translateY(10px);
+      transition: .18s;
+      pointer-events: none;
+      z-index: 9999;
+      box-shadow: var(--sombra);
+      font-weight: 800;
+    }
+
+    .copy-toast.show { opacity: 1; transform: translateY(0); }
+
+    .legend { font-size: 12px; color: var(--texto-suave); margin-top: 8px; }
+    .muted { color: var(--texto-suave); font-size: 13px; }
+    .row-actions { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+    .danger { color: #b91c1c; font-weight: 800; }
+
+    .pill {
+      display: inline-block;
+      background: rgba(208, 164, 40, .16);
+      color: #8b650d;
+      border: 1px solid rgba(208, 164, 40, .28);
+      border-radius: 999px;
+      padding: 3px 9px;
+      font-size: 12px;
+      font-weight: 850;
+    }
+
+    .nowrap { white-space: nowrap; }
+
+    @media (max-width: 980px) {
+      header {
+        grid-template-columns: 1fr;
+        border-radius: 22px;
+      }
+
+      nav {
+        justify-content: flex-start;
+      }
+
+      .brand {
+        align-items: flex-start;
+      }
+
+      .brand-logo {
+        width: 148px;
+      }
+
+      .brand-title {
+        white-space: normal;
+      }
+    }
+
+    @media (max-width: 620px) {
+      header, main { width: calc(100% - 20px); }
+      header { margin-top: 10px; padding: 14px; }
+      .brand { flex-direction: column; gap: 10px; }
+      .brand-logo { width: 100%; max-width: 260px; }
+      header a { width: 100%; justify-content: center; text-align: center; }
+      nav { width: 100%; }
+      .card { padding: 16px; border-radius: 18px; }
+    }
   </style>
 </head>
 <body>
   <header>
-    <strong>ZapFatri</strong>
-    <a href="/admin">Dashboard</a>
-    <a href="/admin/links">Links</a>
-    <a href="/admin/clicks">Cliques</a>
-    <a href="/admin/reports/weekly">Relatório semanal</a>
-    <a href="/admin/reports/monthly">Relatório mensal</a>
-    <a href="/logout">Sair</a>
+    <div class="brand">
+      <img class="brand-logo" src="${escapeHtml(logoUrl)}" alt="Faculdades Trilógicas">
+      <div class="brand-copy">
+        <div class="brand-title">ZapFatri</div>
+        <div class="brand-subtitle">Rastreamento de links e WhatsApp</div>
+      </div>
+    </div>
+    <nav aria-label="Navegação principal">
+      <a href="/admin">Dashboard</a>
+      <a href="/admin/links">Links</a>
+      <a href="/admin/clicks">Cliques</a>
+      <a href="/admin/reports/weekly">Relatório semanal</a>
+      <a href="/admin/reports/monthly">Relatório mensal</a>
+      <a href="/logout">Sair</a>
+    </nav>
   </header>
   <main>${body}</main>
   <div id="copyToast" class="copy-toast">Copiado</div>
@@ -108,6 +491,8 @@ function layout(title, body) {
 }
 
 function loginPage(error = "") {
+  const logoUrl = process.env.BRAND_LOGO_URL || "https://agenda-lives-pbza.onrender.com/fatri-logo.png";
+
   return `<!doctype html>
 <html lang="pt-BR">
 <head>
@@ -115,22 +500,183 @@ function loginPage(error = "") {
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Login | ZapFatri</title>
   <style>
-    body { font-family: Arial, sans-serif; background:#111827; display:grid; place-items:center; min-height:100vh; margin:0; }
-    form { background:white; width:min(420px, 92vw); padding:24px; border-radius:14px; box-shadow:0 10px 30px rgba(0,0,0,.25); }
-    input { width:100%; box-sizing:border-box; padding:12px; border:1px solid #d1d5db; border-radius:8px; font-size:16px; }
-    button { width:100%; margin-top:14px; background:#111827; color:white; border:0; padding:12px; border-radius:8px; font-size:16px; }
-    .error { color:#b91c1c; }
+    :root {
+      --azul-900: #0b234f;
+      --azul-700: #173f86;
+      --dourado-600: #d0a428;
+      --dourado-700: #b88912;
+      --creme: #f5f1e8;
+      --texto: #17223b;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      min-height: 100vh;
+      margin: 0;
+      display: grid;
+      place-items: center;
+      padding: 20px;
+      background:
+        radial-gradient(circle at 14% 12%, rgba(208, 164, 40, .24), transparent 28rem),
+        radial-gradient(circle at 86% 8%, rgba(23, 63, 134, .24), transparent 28rem),
+        linear-gradient(145deg, #f9f5ec, #eef2f7 48%, #f5f1e8);
+      color: var(--texto);
+    }
+
+    .login-shell {
+      width: min(980px, 96vw);
+      display: grid;
+      grid-template-columns: minmax(280px, 1fr) minmax(320px, 430px);
+      gap: 18px;
+      align-items: stretch;
+    }
+
+    .hero {
+      color: white;
+      border-radius: 30px;
+      padding: clamp(26px, 4vw, 46px);
+      background:
+        linear-gradient(135deg, rgba(255,255,255,.12), transparent 42%),
+        linear-gradient(135deg, var(--azul-700), var(--azul-900));
+      box-shadow: 0 22px 58px rgba(11, 35, 79, .20);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      min-height: 430px;
+    }
+
+    .hero img {
+      width: min(310px, 100%);
+      background: white;
+      border-radius: 22px;
+      padding: 12px 18px;
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,.35);
+    }
+
+    .eyebrow {
+      margin-top: 34px;
+      color: rgba(255,255,255,.72);
+      font-weight: 900;
+      letter-spacing: .16em;
+      text-transform: uppercase;
+      font-size: 12px;
+    }
+
+    h1 {
+      margin: 12px 0 0;
+      font-size: clamp(42px, 7vw, 74px);
+      line-height: .92;
+      letter-spacing: -.06em;
+    }
+
+    .hero p {
+      max-width: 620px;
+      margin: 20px 0 0;
+      color: rgba(255,255,255,.86);
+      font-size: 17px;
+      line-height: 1.55;
+    }
+
+    form {
+      background: rgba(255,255,255,.94);
+      border: 1px solid rgba(255,255,255,.82);
+      width: 100%;
+      padding: clamp(24px, 4vw, 38px);
+      border-radius: 30px;
+      box-shadow: 0 22px 58px rgba(11, 35, 79, .16);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+
+    form h2 {
+      margin: 0 0 8px;
+      color: var(--azul-900);
+      font-size: 30px;
+      letter-spacing: -.04em;
+    }
+
+    form p {
+      color: #657089;
+      margin: 0 0 22px;
+      line-height: 1.45;
+    }
+
+    label {
+      display: block;
+      font-weight: 850;
+      color: var(--azul-900);
+      margin-bottom: 8px;
+    }
+
+    input {
+      width: 100%;
+      box-sizing: border-box;
+      padding: 14px;
+      border: 1px solid rgba(23, 34, 59, .16);
+      border-radius: 16px;
+      font-size: 16px;
+      outline: none;
+      background: #fff;
+    }
+
+    input:focus {
+      border-color: rgba(23, 63, 134, .55);
+      box-shadow: 0 0 0 4px rgba(23, 63, 134, .10);
+    }
+
+    button {
+      width: 100%;
+      margin-top: 16px;
+      background: linear-gradient(135deg, var(--dourado-600), var(--dourado-700));
+      color: white;
+      border: 0;
+      padding: 14px;
+      border-radius: 16px;
+      font-size: 16px;
+      font-weight: 900;
+      cursor: pointer;
+      box-shadow: 0 14px 28px rgba(184, 137, 18, .22);
+    }
+
+    .error {
+      color: #b91c1c;
+      background: #fff1f2;
+      border: 1px solid #fecdd3;
+      padding: 10px 12px;
+      border-radius: 14px;
+      font-weight: 800;
+      margin-bottom: 14px;
+    }
+
+    @media (max-width: 860px) {
+      .login-shell { grid-template-columns: 1fr; }
+      .hero { min-height: auto; }
+    }
   </style>
 </head>
 <body>
-  <form method="post" action="/login">
-    <h1>ZapFatri</h1>
-    <p>Entre para administrar seus links rastreáveis.</p>
-    ${error ? `<p class="error">${escapeHtml(error)}</p>` : ""}
-    <label>Senha admin</label>
-    <input type="password" name="password" autofocus required>
-    <button type="submit">Entrar</button>
-  </form>
+  <div class="login-shell">
+    <section class="hero">
+      <div>
+        <img src="${escapeHtml(logoUrl)}" alt="Faculdades Trilógicas">
+        <div class="eyebrow">Painel administrativo</div>
+        <h1>ZapFatri</h1>
+        <p>Controle links rastreáveis, cliques, origens e relatórios de WhatsApp com leitura rápida para a operação.</p>
+      </div>
+    </section>
+
+    <form method="post" action="/login">
+      <h2>Entrar</h2>
+      <p>Use sua senha administrativa para acessar o painel.</p>
+      ${error ? `<div class="error">${escapeHtml(error)}</div>` : ""}
+      <label>Senha admin</label>
+      <input type="password" name="password" autofocus required>
+      <button type="submit">Acessar painel</button>
+    </form>
+  </div>
 </body>
 </html>`;
 }
