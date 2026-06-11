@@ -1,0 +1,14 @@
+name = "zapfatri-go"
+main = "src/worker.js"
+compatibility_date = "2025-01-01"
+
+# Variáveis não secretas.
+# Secrets como SUPABASE_SERVICE_ROLE_KEY devem ser configurados com:
+# wrangler secret put SUPABASE_SERVICE_ROLE_KEY
+[vars]
+ALLOW_NUMERIC_PHONE_WITHOUT_LOOKUP = "true"
+
+# Depois configure a rota no painel da Cloudflare ou descomente e ajuste:
+# routes = [
+#   { pattern = "go.zapfatri.com/*", zone_name = "zapfatri.com" }
+# ]
